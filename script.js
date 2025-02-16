@@ -2,9 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const habitInput = document.getElementById('habitInput');
     const addHabitBtn = document.getElementById('addHabitBtn');
     const habitList = document.getElementById('habitList');
+    const calendar = document.getElementById('calendar');
 
     // Load habits from localStorage
     let habits = JSON.parse(localStorage.getItem('habits')) || [];
+    let completionDates = JSON.parse(localStorage.getItem('completionDates')) || {};
+    
+    // Initialize calendar
+    initializeCalendar();
     
     // Display existing habits
     habits.forEach(habit => displayHabit(habit));
@@ -79,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (checkbox.checked) {
                 celebrateCompletion();
+                updateCalendarCompletion();
             }
         });
 
@@ -108,5 +114,72 @@ document.addEventListener('DOMContentLoaded', () => {
                 origin: { x: 1 }
             });
         }, 250);
+    }
+
+    function initializeCalendar() {
+        // Add day headers
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        days.forEach(day => {
+            const dayHeader = document.createElement('div');
+            dayHeader.className = 'calendar-header';
+            dayHeader.textContent = day;
+            calendar.appendChild(dayHeader);
+        });
+
+        // Add calendar days
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        
+        // Get first day of current month
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+        
+        // Add empty cells for days before first of month
+        for (let i = 0; i < firstDay.getDay(); i++) {
+            addCalendarDay('');
+        }
+        
+        // Add days of current month
+        for (let date = 1; date <= lastDay.getDate(); date++) {
+            const dateStr = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
+            const dayElement = addCalendarDay(date);
+            
+            if (completionDates[dateStr]) {
+                dayElement.classList.add('completed');
+            }
+            
+            if (date === today.getDate()) {
+                dayElement.classList.add('today');
+            }
+        }
+    }
+
+    function addCalendarDay(content) {
+        const dayElement = document.createElement('div');
+        dayElement.className = 'calendar-day';
+        dayElement.textContent = content;
+        calendar.appendChild(dayElement);
+        return dayElement;
+    }
+
+    function updateCalendarCompletion() {
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+        
+        // Check if all habits are completed for today
+        const allCompleted = habits.every(habit => habit.completed);
+        
+        if (allCompleted) {
+            completionDates[dateStr] = true;
+            localStorage.setItem('completionDates', JSON.stringify(completionDates));
+            
+            // Update calendar UI
+            const todayElement = Array.from(document.querySelectorAll('.calendar-day'))
+                .find(day => day.classList.contains('today'));
+            if (todayElement) {
+                todayElement.classList.add('completed');
+            }
+        }
     }
 }); 
