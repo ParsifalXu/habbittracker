@@ -28,7 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const habit = {
             id: Date.now(),
             text: habitText,
-            createdAt: new Date()
+            createdAt: new Date(),
+            completed: false
         };
 
         // Add to habits array
@@ -53,7 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
         habitElement.dataset.id = habit.id;
         
         habitElement.innerHTML = `
-            <span class="habit-text">${habit.text}</span>
+            <div class="habit-content">
+                <input type="checkbox" class="habit-checkbox" ${habit.completed ? 'checked' : ''}>
+                <span class="habit-text">${habit.text}</span>
+            </div>
             <button class="delete-btn">×</button>
         `;
 
@@ -65,6 +69,44 @@ document.addEventListener('DOMContentLoaded', () => {
             habitElement.remove();
         });
 
+        // Add checkbox functionality
+        const checkbox = habitElement.querySelector('.habit-checkbox');
+        checkbox.addEventListener('change', () => {
+            const habitId = parseInt(habitElement.dataset.id);
+            const habit = habits.find(h => h.id === habitId);
+            habit.completed = checkbox.checked;
+            localStorage.setItem('habits', JSON.stringify(habits));
+
+            if (checkbox.checked) {
+                celebrateCompletion();
+            }
+        });
+
         habitList.appendChild(habitElement);
+    }
+
+    function celebrateCompletion() {
+        // Fire confetti from the center
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+
+        // Fire from the sides
+        setTimeout(() => {
+            confetti({
+                particleCount: 50,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 }
+            });
+            confetti({
+                particleCount: 50,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 }
+            });
+        }, 250);
     }
 }); 
